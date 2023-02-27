@@ -1,0 +1,4 @@
+name: InventoryLibrary
+version: '${project.version}'
+main: xyz.larkyy.inventorylibrary.InventoryLibrary
+api-version: 1.19
