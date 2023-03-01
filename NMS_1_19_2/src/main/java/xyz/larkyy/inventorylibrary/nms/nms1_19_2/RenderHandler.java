@@ -17,6 +17,13 @@ import xyz.larkyy.inventorylibrary.api.IRenderHandler;
 import xyz.larkyy.inventorylibrary.api.ui.rendered.RenderedMenu;
 
 public class RenderHandler implements IRenderHandler {
+
+    private final NMSHandlerImpl nmsHandler;
+
+    public RenderHandler(NMSHandlerImpl nmsHandler) {
+        this.nmsHandler = nmsHandler;
+    }
+
     @Override
     public Inventory createInventory(InventoryHolder holder, InventoryType inventoryType, int size) {
 
@@ -64,7 +71,7 @@ public class RenderHandler implements IRenderHandler {
         player.containerMenu.transferTo(craftContainer, player.getBukkitEntity());
         var packet = new ClientboundOpenScreenPacket(craftContainer.containerId,type,title);
 
-        player.connection.connection.send(packet);
+        nmsHandler.sendPacket(player.getBukkitEntity(), packet);
         player.containerMenu = craftContainer;
         player.initMenu(craftContainer);
 

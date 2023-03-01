@@ -13,7 +13,6 @@ import xyz.larkyy.inventorylibrary.api.ui.flag.InventoryFlags;
 import xyz.larkyy.inventorylibrary.api.ui.history.HistoryHandler;
 import xyz.larkyy.inventorylibrary.api.ui.history.IReopenable;
 import xyz.larkyy.inventorylibrary.api.ui.rendered.component.RenderedComponent;
-import xyz.larkyy.inventorylibrary.api.ui.template.component.Component;
 
 import javax.annotation.Nonnull;
 import java.util.*;

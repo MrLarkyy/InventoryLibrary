@@ -1,5 +1,6 @@
 package xyz.larkyy.inventorylibrary.api.ui.rendered.component;
 
+import org.bukkit.inventory.ItemStack;
 import xyz.larkyy.inventorylibrary.api.itemstack.CustomItem;
 import xyz.larkyy.inventorylibrary.api.ui.SlotSelection;
 import xyz.larkyy.inventorylibrary.api.ui.event.CustomInventoryClickEvent;
@@ -11,7 +12,7 @@ public class RenderedButton implements RenderedComponent {
 
     private final Button button;
 
-    private CustomItem customItem;
+    private ItemStack itemStack;
     private Consumer<CustomInventoryClickEvent> clickConsumer;
     private SlotSelection slotSelection;
 
@@ -22,7 +23,7 @@ public class RenderedButton implements RenderedComponent {
     }
 
     public void applyValues(Button button) {
-        this.customItem = button.getCustomItem().clone();
+        this.itemStack = button.getItemStack().clone();
         this.clickConsumer = button.getClickConsumer();
         this.slotSelection = button.getSlotSelection().clone();
     }
@@ -39,16 +40,16 @@ public class RenderedButton implements RenderedComponent {
         this.clickConsumer = clickConsumer;
     }
 
-    public void setCustomItem(CustomItem customItem) {
-        this.customItem = customItem;
+    public void setItemStack(ItemStack itemStack) {
+        this.itemStack = itemStack;
     }
 
     public SlotSelection getSlotSelection() {
         return slotSelection;
     }
 
-    public CustomItem getCustomItem() {
-        return customItem;
+    public ItemStack getItemStack() {
+        return itemStack;
     }
 
     @Override

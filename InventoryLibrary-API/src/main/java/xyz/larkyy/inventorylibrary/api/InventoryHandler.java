@@ -19,27 +19,23 @@ public class InventoryHandler {
     private static InventoryHandler instance;
 
     private final JavaPlugin plugin;
-    private final IRenderHandler renderHandler;
-    private final IItemHandler itemHandler;
-    private final HistoryHandler historyHandler;
+    private final NMSHandler nmsHandler;
 
     private final PacketListener packetListener;
+    private final HistoryHandler historyHandler;
 
-    public static InventoryHandler init(JavaPlugin plugin, IRenderHandler renderHandler, IItemHandler itemHandler,
-                                        PlayerPacketInjector playerPacketInjector) {
+    public static InventoryHandler init(JavaPlugin plugin, NMSHandler nmsHandler) {
         if (instance != null) {
             return instance;
         }
-        instance = new InventoryHandler(plugin,renderHandler,itemHandler,playerPacketInjector);
+        instance = new InventoryHandler(plugin,nmsHandler);
         return instance;
     }
 
-    private InventoryHandler(JavaPlugin plugin, IRenderHandler renderHandler, IItemHandler itemHandler,
-                             PlayerPacketInjector playerPacketInjector) {
+    private InventoryHandler(JavaPlugin plugin, NMSHandler nmsHandler) {
         this.plugin = plugin;
-        this.renderHandler = renderHandler;
-        this.itemHandler = itemHandler;
-        this.packetListener = new PacketListener(playerPacketInjector);
+        this.nmsHandler = nmsHandler;
+        this.packetListener = new PacketListener(nmsHandler.getPlayerPacketInjector());
         Bukkit.getPluginManager().registerEvents(packetListener,plugin);
         historyHandler = new HistoryHandler();
 
@@ -52,11 +48,11 @@ public class InventoryHandler {
     }
 
     public IRenderHandler getRenderHandler() {
-        return renderHandler;
+        return nmsHandler.getRenderHandler();
     }
 
     public IItemHandler getItemHandler() {
-        return itemHandler;
+        return nmsHandler.getItemHandler();
     }
 
     public HistoryHandler getHistoryHandler() {
@@ -72,7 +68,7 @@ public class InventoryHandler {
          */
     public void closeAll() {
         for (Player player : Bukkit.getOnlinePlayers()) {
-            var holder = renderHandler.getOpenedMenu(player).getHolder();
+            var holder = getRenderHandler().getOpenedMenu(player).getHolder();
             if (holder instanceof RenderedMenu renderedMenu) {
                 player.closeInventory();
             }
@@ -80,7 +76,7 @@ public class InventoryHandler {
     }
 
     public RenderedMenu getOpenedMenu(Player player) {
-        var holder = renderHandler.getOpenedMenu(player).getHolder();
+        var holder = getRenderHandler().getOpenedMenu(player).getHolder();
         if (holder instanceof RenderedMenu renderedMenu) {
             return renderedMenu;
         }

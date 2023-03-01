@@ -13,6 +13,12 @@ import java.util.UUID;
 
 public class ItemHandler implements IItemHandler {
 
+    private final NMSHandlerImpl nmsHandler;
+
+    public ItemHandler(NMSHandlerImpl nmsHandler) {
+        this.nmsHandler = nmsHandler;
+    }
+
     public org.bukkit.inventory.ItemStack buildItemStack(CustomItem customItem) {
         var item = CraftMagicNumbers.getItem(customItem.getMaterial());
         if (item == null) {

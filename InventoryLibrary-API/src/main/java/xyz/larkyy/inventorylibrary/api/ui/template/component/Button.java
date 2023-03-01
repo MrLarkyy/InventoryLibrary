@@ -1,5 +1,6 @@
 package xyz.larkyy.inventorylibrary.api.ui.template.component;
 
+import org.bukkit.inventory.ItemStack;
 import xyz.larkyy.inventorylibrary.api.itemstack.CustomItem;
 import xyz.larkyy.inventorylibrary.api.ui.SlotSelection;
 import xyz.larkyy.inventorylibrary.api.ui.event.CustomInventoryClickEvent;
@@ -9,22 +10,22 @@ import java.util.function.Consumer;
 
 public class Button implements Component {
 
-    private CustomItem customItem;
+    private ItemStack itemStack;
     private SlotSelection slotSelection;
     private Consumer<CustomInventoryClickEvent> clickConsumer;
 
-    public Button(CustomItem customItem, SlotSelection slotSelection, @Nonnull Consumer<CustomInventoryClickEvent> clickConsumer) {
-        this.customItem = customItem;
+    public Button(ItemStack itemStack, SlotSelection slotSelection, @Nonnull Consumer<CustomInventoryClickEvent> clickConsumer) {
+        this.itemStack = itemStack;
         this.slotSelection = slotSelection;
         this.clickConsumer = clickConsumer;
     }
 
-    public Button(CustomItem customItem, SlotSelection slotSelection) {
-        this(customItem,slotSelection,e -> {});
+    public Button(ItemStack itemStack, SlotSelection slotSelection) {
+        this(itemStack,slotSelection,e -> {});
     }
 
-    public CustomItem getCustomItem() {
-        return customItem;
+    public ItemStack getItemStack() {
+        return itemStack;
     }
 
     public SlotSelection getSlotSelection() {
@@ -39,8 +40,8 @@ public class Button implements Component {
         this.clickConsumer = clickConsumer;
     }
 
-    public void setCustomItem(CustomItem customItem) {
-        this.customItem = customItem;
+    public void setItemStack(ItemStack itemStack) {
+        this.itemStack = itemStack;
     }
 
     public void setSlotSelection(SlotSelection slotSelection) {

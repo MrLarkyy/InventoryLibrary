@@ -1,10 +1,12 @@
 package xyz.larkyy.inventorylibrary.nms.nms1_19_2;
 
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelDuplexHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.*;
+import net.minecraft.network.Connection;
+import net.minecraft.network.ConnectionProtocol;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.game.ClientboundOpenScreenPacket;
 import net.minecraft.network.protocol.game.ServerboundContainerClickPacket;
 import org.bukkit.Bukkit;
@@ -20,18 +22,76 @@ import xyz.larkyy.inventorylibrary.api.packet.wrapped.WrappedClientboundOpenScre
 import xyz.larkyy.inventorylibrary.api.packet.wrapped.WrappedPacket;
 import xyz.larkyy.inventorylibrary.api.packet.wrapped.WrappedServerboundContainerClickPacket;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 public class PlayerPacketInjectorImpl implements PlayerPacketInjector {
+
+    private final NMSHandlerImpl nmsHandler;
+
+    private final Map<UUID, ChannelPipeline> pipelines = new HashMap<>();
+
+    public PlayerPacketInjectorImpl(NMSHandlerImpl nmsHandler) {
+        this.nmsHandler = nmsHandler;
+    }
+
+    public void sendPacket(Player player, Packet<?> packet) {
+        var pipeline = pipelines.get(player.getUniqueId());
+        if (pipeline == null) {
+            return;
+        }
+        if (packet == null) {
+            return;
+        }
+
+        var compressed = compressPacket(packet);
+        if (compressed == null) {
+            return;
+        }
+        pipeline.write(compressed);
+        pipeline.flush();
+    }
+
+    private Integer getPacketId(Packet<?> packet) {
+        return ConnectionProtocol.PLAY.getPacketId(PacketFlow.CLIENTBOUND, packet);
+    }
+
+    private FriendlyByteBuf compressPacket(Packet<?> packet) {
+        var packetId = getPacketId(packet);
+        if (packetId == null) {
+            return null;
+        }
+        var buf = new FriendlyByteBuf(Unpooled.buffer());
+        buf.writeByte(packetId);
+        packet.write(buf);
+
+        return buf;
+    }
+
     @Override
     public void inject(Player player) {
-        CraftPlayer craftPlayer = (CraftPlayer)player;
-        var channel = craftPlayer.getHandle().connection.connection.channel;
+        CraftPlayer craftPlayer = (CraftPlayer) player;
+        var pipeline = craftPlayer.getHandle().connection.getConnection().channel.pipeline();
+
+        pipelines.put(player.getUniqueId(), pipeline);
+
         ChannelDuplexHandler cdh = new ChannelDuplexHandler() {
             @Override
             public void channelRead(ChannelHandlerContext ctx, Object packetObj) {
-                Packet<?> pkt = (Packet<?>) packetObj;
+
+                if (!(packetObj instanceof Packet<?> pkt)) {
+                    try {
+                        super.channelRead(ctx, packetObj);
+                    } catch (Exception ignored) {
+                    }
+                    return;
+                }
                 var name = pkt.getClass().getSimpleName();
 
                 WrappedPacket wrapped = null;
+
+                //Bukkit.broadcastMessage("Packet: "+name);
 
                 switch (name.toLowerCase()) {
                     case "packetplayinwindowclick" -> {
@@ -40,7 +100,7 @@ public class PlayerPacketInjectorImpl implements PlayerPacketInjector {
                         }
                         ServerboundContainerClickPacket packet = (ServerboundContainerClickPacket) pkt;
                         var changedSlots =
-                                Utils.map(packet.getChangedSlots(),CraftItemStack::asBukkitCopy);
+                                Utils.map(packet.getChangedSlots(), CraftItemStack::asBukkitCopy);
 
                         wrapped = new WrappedServerboundContainerClickPacket(
                                 player,
@@ -62,14 +122,21 @@ public class PlayerPacketInjectorImpl implements PlayerPacketInjector {
                 }
 
                 try {
-                    super.channelRead(ctx,packetObj);
+                    super.channelRead(ctx, packetObj);
                 } catch (Exception ignored) {
                 }
             }
 
             @Override
             public void write(ChannelHandlerContext ctx, Object packetObj, ChannelPromise promise) {
-                Packet<?> pkt = (Packet<?>) packetObj;
+                if (!(packetObj instanceof Packet<?> pkt)) {
+                    try {
+                        super.write(ctx, packetObj, promise);
+                    } catch (Exception ignored) {
+
+                    }
+                    return;
+                }
                 var name = pkt.getClass().getSimpleName();
 
                 WrappedPacket wrapped = null;
@@ -80,7 +147,7 @@ public class PlayerPacketInjectorImpl implements PlayerPacketInjector {
                             break;
                         }
                         ClientboundOpenScreenPacket packet = (ClientboundOpenScreenPacket) pkt;
-                        wrapped = new WrappedClientboundOpenScreenPacket(player,packet.getContainerId(),packet.getTitle().getString());
+                        wrapped = new WrappedClientboundOpenScreenPacket(player, packet.getContainerId(), packet.getTitle().getString());
                         InventoryHandler.getInstance().getPacketListener().call(wrapped);
                     }
                 }
@@ -89,16 +156,18 @@ public class PlayerPacketInjectorImpl implements PlayerPacketInjector {
                 }
 
                 try {
-                    super.write(ctx,packetObj,promise);
+                    super.write(ctx, packetObj, promise);
                 } catch (Exception ignored) {
 
                 }
             }
         };
 
-        if (channel != null) {
-            channel.eventLoop().execute(() ->
-                    channel.pipeline().addBefore("packet_handler", "InventoryLibrary_packet_reader", cdh));
+        for (String str : pipeline.toMap().keySet()) {
+            if (pipeline.get(str) instanceof Connection) {
+                pipeline.addBefore("packet_handler", "InventoryLibrary_packet_reader", cdh);
+                break;
+            }
         }
     }
 
@@ -112,6 +181,7 @@ public class PlayerPacketInjectorImpl implements PlayerPacketInjector {
                 }
             } catch (Exception ignored) {
             }
+            pipelines.remove(player.getUniqueId());
         }
     }
 
