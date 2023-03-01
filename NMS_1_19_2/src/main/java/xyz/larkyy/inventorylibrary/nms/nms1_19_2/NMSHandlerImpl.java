@@ -1,6 +1,7 @@
 package xyz.larkyy.inventorylibrary.nms.nms1_19_2;
 
 import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket;
 import org.bukkit.entity.Player;
 import xyz.larkyy.inventorylibrary.api.NMSHandler;
 

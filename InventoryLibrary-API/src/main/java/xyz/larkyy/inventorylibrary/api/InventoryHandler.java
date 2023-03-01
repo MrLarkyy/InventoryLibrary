@@ -7,6 +7,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import xyz.larkyy.inventorylibrary.api.packet.PacketListener;
 import xyz.larkyy.inventorylibrary.api.packet.PlayerPacketInjector;
+import xyz.larkyy.inventorylibrary.api.packet.wrapped.WrappedClientboundContainerSetContentPacket;
 import xyz.larkyy.inventorylibrary.api.packet.wrapped.WrappedClientboundOpenScreenPacket;
 import xyz.larkyy.inventorylibrary.api.packet.wrapped.WrappedServerboundContainerClickPacket;
 import xyz.larkyy.inventorylibrary.api.ui.event.CustomInventoryClickEvent;
@@ -99,23 +100,27 @@ public class InventoryHandler {
         packetListener.register(WrappedServerboundContainerClickPacket.class, event -> {
             var player = event.getPlayer();
             var openedMenu = getOpenedMenu(player);
+            if (openedMenu == null) {
+                return;
+            }
 
-            var bukkitEvent = new CustomInventoryClickEvent(openedMenu,player,event.getClickType(),event.getSlotNum());
+            var bukkitEvent = new CustomInventoryClickEvent(openedMenu,player,event.getClickType(),event.getSlotNum(),
+                    event.getChangedSlots(),event.getCarriedItem());
             new BukkitRunnable() {
                 @Override
                 public void run() {
                     Bukkit.getPluginManager().callEvent(bukkitEvent);
-                    if (bukkitEvent.isCancelled()) {
-                        event.setCancelled(true);
-                        return;
-                    }
                     openedMenu.interact(bukkitEvent);
-                    if (bukkitEvent.isCancelled()) {
-                        event.setCancelled(true);
-                    }
+                    event.setCancelled(true);
                 }
             }.runTask(plugin);
-
+        });
+        packetListener.register(WrappedClientboundContainerSetContentPacket.class, event -> {
+            var player = event.getPlayer();
+            var openedMenu = getOpenedMenu(player);
+            if (openedMenu == null) {
+                return;
+            }
         });
     }
 }

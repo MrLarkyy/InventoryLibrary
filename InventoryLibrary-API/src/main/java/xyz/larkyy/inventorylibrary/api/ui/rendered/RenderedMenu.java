@@ -1,10 +1,12 @@
 package xyz.larkyy.inventorylibrary.api.ui.rendered;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 import xyz.larkyy.inventorylibrary.api.InventoryHandler;
 import xyz.larkyy.inventorylibrary.api.ui.event.CustomInventoryClickEvent;
@@ -33,7 +35,7 @@ public class RenderedMenu implements InventoryHolder, IReopenable, Cloneable {
         When the player has a cached container id, it uses the id
         and when there is no cache a new container id is being created.
      */
-    private final Map<UUID,Integer> cachedPlayers = new HashMap<>();
+    private final Map<UUID,InventoryPlayer> cachedPlayers = new HashMap<>();
 
     private String title;
 
@@ -122,19 +124,137 @@ public class RenderedMenu implements InventoryHolder, IReopenable, Cloneable {
     private void handleOpen(@Nonnull Player player) {
         runAsyncTask(() -> {
             if (cachedPlayers.containsKey(player.getUniqueId())) {
-                int id = cachedPlayers.get(player.getUniqueId());
+                int id = cachedPlayers.get(player.getUniqueId()).getInventoryId();
                 InventoryHandler.getInstance().getRenderHandler().openMenu(player,RenderedMenu.this,id);
             } else {
                 int id = InventoryHandler.getInstance().getRenderHandler().openNewMenu(player,RenderedMenu.this);
-                Bukkit.broadcastMessage("Open id: "+id);
-                cachedPlayers.put(player.getUniqueId(),id);
+                cachedPlayers.put(player.getUniqueId(),new InventoryPlayer(player.getUniqueId(),id));
             }
+            runSyncTask(() -> handleUpdateContent(player));
         });
     }
 
+    private void handleUpdateContent(@Nonnull Player player) {
+        if (!cachedPlayers.containsKey(player.getUniqueId())) {
+            return;
+        }
+
+        List<ItemStack> itemStacks = new ArrayList<>();
+        for (int i = 0; i <= getTotalSlots(); i++) {
+            itemStacks.add(new ItemStack(Material.AIR));
+        }
+
+        for (var component : components) {
+            for (Integer slot : component.getSlotSelection().slots()) {
+                if (slot > getTotalSlots()) {
+                    continue;
+                }
+                var itemStack = component.getItemStack();
+                if (itemStack == null) {
+                    continue;
+                }
+                if (slot == getTotalSlots()) {
+                    handleSetItem(
+                            player,
+                            itemStack,
+                            slot
+                            );
+                } else {
+                    itemStacks.set(slot, itemStack);
+                }
+            }
+        }
+
+        var inventoryPlayer = cachedPlayers.get(player.getUniqueId());
+        InventoryHandler.getInstance().getRenderHandler().setWindowContent(
+                player,
+                inventoryPlayer.getInventoryId(),
+                itemStacks
+        );
+    }
+
+    /*
+        Refreshes an area of slots to what should be rendered from components.
+        This method is mainly used for the CustomInventoryClickEvent. So when the
+        event is cancelled, it refreshes slots that were modified by player.
+     */
+
+    public void refreshSlot(Player player, int slot) {
+        ItemStack itemStack = null;
+        for (var component : components) {
+            if (!component.getSlotSelection().slots().contains(slot)) {
+                continue;
+            }
+            if (component.getItemStack() == null) {
+                continue;
+            }
+            itemStack = component.getItemStack();
+        }
+        if (itemStack == null) {
+            return;
+        }
+        handleSetItem(player,itemStack,slot);
+    }
+
+    private void handleSetItem(@Nonnull Player player, @Nonnull ItemStack itemStack, int slot) {
+        if (!cachedPlayers.containsKey(player.getUniqueId())) {
+            return;
+        }
+        var inventoryPlayer = cachedPlayers.get(player.getUniqueId());
+
+        int topSlotAmount = getInventory().getContents().length;
+        int totalSlotAmount = topSlotAmount + 36;
+
+        if (slot == totalSlotAmount) {
+            Bukkit.broadcastMessage("Setting offhend");
+            InventoryHandler.getInstance().getRenderHandler().setSlot(
+                    player,
+                    0,
+                    45,
+                    itemStack
+            );
+        } else {
+            InventoryHandler.getInstance().getRenderHandler().setSlot(
+                    player,
+                    inventoryPlayer.getInventoryId(),
+                    slot,
+                    itemStack
+            );
+        }
+
+    }
+
+    /*
+        Updates the item on cursor. This method is mainly used for the
+        CustomInventoryClickEvent. So when the event is cancelled,
+        it sets the cursor item back to what it should be.
+     */
+    public void setCursorItem(Player player, ItemStack itemStack) {
+        if (!cachedPlayers.containsKey(player.getUniqueId())) {
+            return;
+        }
+        var invPlayer = cachedPlayers.get(player.getUniqueId());
+        invPlayer.setCarriedItem(itemStack);
+        InventoryHandler.getInstance().getRenderHandler().setSlot(player,-1,-1,itemStack);
+    }
+
     public void interact(CustomInventoryClickEvent event) {
+        if (!cachedPlayers.containsKey(event.getPlayer().getUniqueId())) {
+            return;
+        }
         for (var component : components) {
             component.interact(event);
+        }
+        var invPlayer = cachedPlayers.get(event.getPlayer().getUniqueId());
+
+        if (event.isCancelled()) {
+            for (int i : event.getChangedSlots().keySet()) {
+                Bukkit.broadcastMessage("Updating slot");
+                refreshSlot(event.getPlayer(), i);
+            }
+            setCursorItem(event.getPlayer(),invPlayer.getCarriedItem());
+        } else {
+            invPlayer.setCarriedItem(event.getCarriedItem());
         }
     }
 
@@ -145,6 +265,15 @@ public class RenderedMenu implements InventoryHolder, IReopenable, Cloneable {
                 runnable.run();
             }
         }.runTaskAsynchronously(InventoryHandler.getInstance().getPlugin());
+    }
+
+    private void runSyncTask(Runnable runnable) {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                runnable.run();
+            }
+        }.runTask(InventoryHandler.getInstance().getPlugin());
     }
 
     @Override
@@ -169,5 +298,12 @@ public class RenderedMenu implements InventoryHolder, IReopenable, Cloneable {
 
     private HistoryHandler historyHandler() {
         return InventoryHandler.getInstance().getHistoryHandler();
+    }
+
+    public int getTotalSlots() {
+        int topSlotAmount = getInventory().getContents().length;
+
+        // Player's inventory
+        return topSlotAmount + 36;
     }
 }

@@ -44,10 +44,12 @@ public class RenderedButton implements RenderedComponent {
         this.itemStack = itemStack;
     }
 
+    @Override
     public SlotSelection getSlotSelection() {
         return slotSelection;
     }
 
+    @Override
     public ItemStack getItemStack() {
         return itemStack;
     }

@@ -7,8 +7,10 @@ import net.minecraft.network.ConnectionProtocol;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket;
 import net.minecraft.network.protocol.game.ClientboundOpenScreenPacket;
 import net.minecraft.network.protocol.game.ServerboundContainerClickPacket;
+import net.minecraft.network.protocol.game.ServerboundSeenAdvancementsPacket;
 import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.v1_19_R1.entity.CraftPlayer;
 import org.bukkit.craftbukkit.v1_19_R1.inventory.CraftItemStack;
@@ -18,13 +20,16 @@ import xyz.larkyy.inventorylibrary.api.Utils;
 import xyz.larkyy.inventorylibrary.api.packet.ClickType;
 import xyz.larkyy.inventorylibrary.api.packet.PacketListener;
 import xyz.larkyy.inventorylibrary.api.packet.PlayerPacketInjector;
+import xyz.larkyy.inventorylibrary.api.packet.wrapped.WrappedClientboundContainerSetContentPacket;
 import xyz.larkyy.inventorylibrary.api.packet.wrapped.WrappedClientboundOpenScreenPacket;
 import xyz.larkyy.inventorylibrary.api.packet.wrapped.WrappedPacket;
 import xyz.larkyy.inventorylibrary.api.packet.wrapped.WrappedServerboundContainerClickPacket;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class PlayerPacketInjectorImpl implements PlayerPacketInjector {
 
@@ -93,6 +98,10 @@ public class PlayerPacketInjectorImpl implements PlayerPacketInjector {
 
                 //Bukkit.broadcastMessage("Packet: "+name);
 
+                if (name.toLowerCase().contains("item") || name.toLowerCase().contains("advancement") || name.toLowerCase().contains("achievement")) {
+                    Bukkit.broadcastMessage("Packet: "+name);
+                }
+
                 switch (name.toLowerCase()) {
                     case "packetplayinwindowclick" -> {
                         if (!packetListener().isListeningTo(WrappedServerboundContainerClickPacket.class)) {
@@ -139,6 +148,15 @@ public class PlayerPacketInjectorImpl implements PlayerPacketInjector {
                 }
                 var name = pkt.getClass().getSimpleName();
 
+                /*
+                if (!name.equalsIgnoreCase("ClientboundSystemChatPacket")) {
+                }
+                 */
+
+                if (name.toLowerCase().contains("item") || name.toLowerCase().contains("advancement") || name.toLowerCase().contains("achievement")) {
+                    Bukkit.broadcastMessage("Packet: "+name);
+                }
+
                 WrappedPacket wrapped = null;
 
                 switch (name.toLowerCase()) {
@@ -148,11 +166,24 @@ public class PlayerPacketInjectorImpl implements PlayerPacketInjector {
                         }
                         ClientboundOpenScreenPacket packet = (ClientboundOpenScreenPacket) pkt;
                         wrapped = new WrappedClientboundOpenScreenPacket(player, packet.getContainerId(), packet.getTitle().getString());
-                        InventoryHandler.getInstance().getPacketListener().call(wrapped);
+                    }
+                    case "packetplayoutwindowitems" -> {
+                        Bukkit.broadcastMessage("Called!");
+                        if (!packetListener().isListeningTo(WrappedClientboundContainerSetContentPacket.class)) {
+                            break;
+                        }
+                        ClientboundContainerSetContentPacket packet = (ClientboundContainerSetContentPacket) pkt;
+                        wrapped = new WrappedClientboundContainerSetContentPacket(player, CraftItemStack.asBukkitCopy(packet.getCarriedItem()),
+                                packet.getContainerId(),packet.getStateId(),packet.getItems()
+                                .stream().map(CraftItemStack::asBukkitCopy).collect(Collectors.toList()));
+
                     }
                 }
-                if (wrapped != null && wrapped.isCancelled()) {
-                    return;
+                if (wrapped != null) {
+                    InventoryHandler.getInstance().getPacketListener().call(wrapped);
+                    if (wrapped.isCancelled()) {
+                        return;
+                    }
                 }
 
                 try {

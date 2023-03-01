@@ -17,12 +17,17 @@ public class CustomInventoryClickEvent extends Event implements Cancellable {
     private final Player player;
     private final ClickType clickType;
     private final int slot;
+    private final Int2ObjectMap<ItemStack> changedSlots;
+    private final ItemStack carriedItem;
 
-    public CustomInventoryClickEvent(RenderedMenu renderedMenu, Player player, ClickType clickType, int slot) {
+    public CustomInventoryClickEvent(RenderedMenu renderedMenu, Player player, ClickType clickType, int slot,
+                                     Int2ObjectMap<ItemStack> changedSlots, ItemStack carriedItem) {
         this.renderedMenu = renderedMenu;
         this.player = player;
         this.clickType = clickType;
         this.slot = slot;
+        this.changedSlots = changedSlots;
+        this.carriedItem = carriedItem;
     }
 
     public static HandlerList getHandlerList() {
@@ -58,5 +63,13 @@ public class CustomInventoryClickEvent extends Event implements Cancellable {
 
     public int getSlot() {
         return slot;
+    }
+
+    public Int2ObjectMap<ItemStack> getChangedSlots() {
+        return changedSlots;
+    }
+
+    public ItemStack getCarriedItem() {
+        return carriedItem;
     }
 }
