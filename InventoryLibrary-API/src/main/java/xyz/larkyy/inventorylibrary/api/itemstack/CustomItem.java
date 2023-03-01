@@ -91,7 +91,11 @@ public class CustomItem implements Cloneable {
         return item;
     }
 
-    static class CustomItemBuilder {
+    public static CustomItemBuilder builder(Material material) {
+        return new CustomItemBuilder(material);
+    }
+
+    public static class CustomItemBuilder {
 
         private final CustomItem customItem;
 

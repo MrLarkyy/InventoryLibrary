@@ -1,13 +1,11 @@
 package xyz.larkyy.inventorylibrary.nms.nms1_19_2;
 
-import net.minecraft.commands.arguments.NbtTagArgument;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundOpenScreenPacket;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.Container;
-import net.minecraft.world.MenuProvider;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.MenuType;
 import org.bukkit.craftbukkit.v1_19_R1.entity.CraftPlayer;
-import org.bukkit.craftbukkit.v1_19_R1.event.CraftEventFactory;
 import org.bukkit.craftbukkit.v1_19_R1.inventory.CraftContainer;
 import org.bukkit.craftbukkit.v1_19_R1.inventory.CraftInventoryCustom;
 import org.bukkit.craftbukkit.v1_19_R1.util.CraftChatMessage;
@@ -21,6 +19,10 @@ import xyz.larkyy.inventorylibrary.api.ui.rendered.RenderedMenu;
 public class RenderHandler implements IRenderHandler {
     @Override
     public Inventory createInventory(InventoryHolder holder, InventoryType inventoryType, int size) {
+
+
+        new CraftInventoryCustom(holder,inventoryType);
+
         CraftInventoryCustom inventory;
         if (size > 0) {
             inventory = new CraftInventoryCustom(holder,size);
@@ -39,10 +41,8 @@ public class RenderHandler implements IRenderHandler {
             return;
         }
         var entityPlayer = entityPlayer(player);
-        var packet = new ClientboundOpenScreenPacket(id,type,
-                CraftChatMessage.fromJSONOrString(renderedMenu.getTitle()));
-
-        entityPlayer.connection.connection.send(packet);
+        var craftContainer = new CraftContainer(craftInv,entityPlayer,id);
+        handleOpen(entityPlayer,craftContainer,type,CraftChatMessage.fromJSONOrString(renderedMenu.getTitle()));
     }
 
     @Override
@@ -55,14 +55,29 @@ public class RenderHandler implements IRenderHandler {
         }
         var entityPlayer = entityPlayer(player);
         var craftContainer = new CraftContainer(craftInv,entityPlayer,entityPlayer.nextContainerCounter());
-        var container = CraftEventFactory.callInventoryOpenEvent(entityPlayer,craftContainer);
+        return handleOpen(entityPlayer,craftContainer,type,CraftChatMessage.fromJSONOrString(renderedMenu.getTitle()));
+    }
 
-        var packet = new ClientboundOpenScreenPacket(container.containerId,type,
-                CraftChatMessage.fromJSONOrString(renderedMenu.getTitle()));
+    private int handleOpen(ServerPlayer player, AbstractContainerMenu craftContainer, MenuType<?> type, Component title) {
 
-        entityPlayer.connection.connection.send(packet);
+        //var container = CraftEventFactory.callInventoryOpenEvent(player,craftContainer);
+        player.containerMenu.transferTo(craftContainer, player.getBukkitEntity());
+        var packet = new ClientboundOpenScreenPacket(craftContainer.containerId,type,title);
 
-        return container.containerId;
+        player.connection.connection.send(packet);
+        player.containerMenu = craftContainer;
+        player.initMenu(craftContainer);
+
+        return craftContainer.containerId;
+    }
+
+    @Override
+    public Inventory getOpenedMenu(Player player) {
+
+        var entityPlayer = entityPlayer(player);
+        var containerMenu = entityPlayer.containerMenu;
+
+        return containerMenu.getBukkitView().getTopInventory();
     }
 
     private ServerPlayer entityPlayer(Player player) {

@@ -18,10 +18,13 @@ public class SlotSelection implements Cloneable {
             slots.add(i);
         }
     }
-
     @Override
     public SlotSelection clone() {
         return new SlotSelection(new ArrayList<>(slots));
+    }
+
+    public List<Integer> slots() {
+        return slots;
     }
 
 }
