@@ -125,31 +125,36 @@ public class RenderedMenu implements InventoryHolder, IReopenable, Cloneable {
 
     private void handleOpen(@Nonnull Player player) {
         runAsyncTask(() -> {
-            int id = InventoryHandler.getInstance().getRenderHandler().openNewMenu(player,RenderedMenu.this);
-            var playerItems = InventoryHandler.getInstance().getRenderHandler().getPlayerInventoryContent(player);
-            List<RenderedComponent> playerComponents = new ArrayList<>();
-            if (!flags.contains(InventoryFlag.CLEAR_PLAYERS_INVENTORY)) {
-                int slot = -9;
-                for (var item : playerItems) {
-                    if (slot < 0) {
-                        slot++;
-                        continue;
-                    }
-                    if (item.getType() == Material.AIR) {
-                        slot++;
-                        continue;
-                    }
-                    var component = new RenderedPlayerItem(item, (e) -> {
-                        if (getFlags().contains(InventoryFlag.CANCEL_PLAYERS_ITEM_INTERACTION)) {
-                            e.setCancelled(true);
+            if (cachedPlayers.containsKey(player.getUniqueId())) {
+                int id = cachedPlayers.get(player.getUniqueId()).getInventoryId();
+                InventoryHandler.getInstance().getRenderHandler().openMenu(player,RenderedMenu.this,id);
+            } else {
+                int id = InventoryHandler.getInstance().getRenderHandler().openNewMenu(player,RenderedMenu.this);
+                var playerItems = InventoryHandler.getInstance().getRenderHandler().getPlayerInventoryContent(player);
+                List<RenderedComponent> playerComponents = new ArrayList<>();
+                if (!flags.contains(InventoryFlag.CLEAR_PLAYERS_INVENTORY)) {
+                    int slot = -9;
+                    for (var item : playerItems) {
+                        if (slot < 0) {
+                            slot++;
+                            continue;
                         }
-                    },
-                            new SlotSelection(Arrays.asList(slot+getInventory().getContents().length)));
-                    playerComponents.add(component);
-                    slot++;
+                        if (item.getType() == Material.AIR) {
+                            slot++;
+                            continue;
+                        }
+                        var component = new RenderedPlayerItem(item, (e) -> {
+                            if (getFlags().contains(InventoryFlag.CANCEL_PLAYERS_ITEM_INTERACTION)) {
+                                e.setCancelled(true);
+                            }
+                        },
+                                new SlotSelection(Arrays.asList(slot+getInventory().getContents().length)));
+                        playerComponents.add(component);
+                        slot++;
+                    }
                 }
+                cachedPlayers.put(player.getUniqueId(),new InventoryPlayer(player.getUniqueId(),id,playerComponents));
             }
-            cachedPlayers.put(player.getUniqueId(),new InventoryPlayer(player.getUniqueId(),id,playerComponents));
             runSyncTask(() -> handleUpdateContent(player));
         });
     }
@@ -341,12 +346,6 @@ public class RenderedMenu implements InventoryHolder, IReopenable, Cloneable {
     @Override
     public RenderedMenu getHistoryMenu() {
         return this;
-    }
-
-    @Override
-    public RenderedMenu clone() {
-        RenderedMenu menu = new RenderedMenu(inventoryType,size,title,flags.clone());
-        return menu;
     }
 
     private HistoryHandler historyHandler() {
