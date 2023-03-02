@@ -16,10 +16,22 @@ public class RenderedButton implements RenderedComponent {
     private Consumer<CustomInventoryClickEvent> clickConsumer;
     private SlotSelection slotSelection;
 
-
     public RenderedButton(Button button) {
         this.button = button;
         applyValues(button);
+    }
+
+    public RenderedButton(ItemStack itemStack, SlotSelection slotSelection) {
+        button = null;
+        this.itemStack = itemStack;
+        this.slotSelection = slotSelection;
+        this.clickConsumer = (e) -> {};
+    }
+    public RenderedButton(ItemStack itemStack, SlotSelection slotSelection, Consumer<CustomInventoryClickEvent> clickConsumer) {
+        button = null;
+        this.itemStack = itemStack;
+        this.slotSelection = slotSelection;
+        this.clickConsumer = clickConsumer;
     }
 
     public void applyValues(Button button) {
@@ -29,6 +41,9 @@ public class RenderedButton implements RenderedComponent {
     }
 
     public void resetDefaults() {
+        if (button == null) {
+            return;
+        }
         applyValues(button);
     }
 

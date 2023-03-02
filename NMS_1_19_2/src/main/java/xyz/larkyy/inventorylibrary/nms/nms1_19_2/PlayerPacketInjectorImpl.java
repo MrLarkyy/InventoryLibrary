@@ -110,7 +110,7 @@ public class PlayerPacketInjectorImpl implements PlayerPacketInjector {
                                 packet.getContainerId(),
                                 CraftItemStack.asBukkitCopy(packet.getCarriedItem()),
                                 changedSlots,
-                                ClickType.get(packet.getClickType().name()),
+                                ClickType.get(packet.getClickType().name(), packet.getButtonNum()),
                                 packet.getSlotNum(),
                                 packet.getStateId()
                         );

@@ -1,6 +1,7 @@
 package xyz.larkyy.inventorylibrary.api.ui;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class SlotSelection implements Cloneable {
@@ -18,6 +19,11 @@ public class SlotSelection implements Cloneable {
             slots.add(i);
         }
     }
+
+    public SlotSelection(int slot) {
+        this.slots = new ArrayList<>(Arrays.asList(slot));
+    }
+
     @Override
     public SlotSelection clone() {
         return new SlotSelection(new ArrayList<>(slots));
