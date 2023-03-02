@@ -67,3 +67,23 @@ The library is still unfinished, there are missing features like:
     renderedMenu.addComponent(renderedButton);
     ```
     At the moment there is really no advantage of using the Button class. It will be all implemented later then!
+## Click Types
+- LEFT_CLICK
+- SHIFT_LEFT_CLICK
+- RIGHT_CLICK
+- SHIFT_RIGHT_CLICK
+- SWAP
+- CLONE
+- THROW
+- QUICK_CRAFT
+- PICKUP_ALL
+- NUM_1
+- NUM_2
+- NUM_3
+- NUM_4
+- NUM_5
+- NUM_6
+- NUM_7
+- NUM_8
+- NUM_9
+
