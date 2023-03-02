@@ -17,5 +17,6 @@ public interface IRenderHandler {
     Inventory getOpenedMenu(Player player);
     void setWindowContent(Player player, int containerId, List<ItemStack> itemStacks);
     void setSlot(Player player, int inventoryId, int slot, ItemStack itemStack);
+    List<ItemStack> getPlayerInventoryContent(Player player);
 
 }

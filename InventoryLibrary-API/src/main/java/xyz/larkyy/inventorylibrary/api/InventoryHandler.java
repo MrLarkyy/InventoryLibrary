@@ -97,30 +97,37 @@ public class InventoryHandler {
     }
 
     private void registerListeners() {
-        packetListener.register(WrappedServerboundContainerClickPacket.class, event -> {
-            var player = event.getPlayer();
-            var openedMenu = getOpenedMenu(player);
-            if (openedMenu == null) {
-                return;
-            }
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                packetListener.register(WrappedServerboundContainerClickPacket.class, event -> {
+                    var player = event.getPlayer();
+                    var openedMenu = getOpenedMenu(player);
+                    if (openedMenu == null) {
+                        return;
+                    }
 
-            var bukkitEvent = new CustomInventoryClickEvent(openedMenu,player,event.getClickType(),event.getSlotNum(),
-                    event.getChangedSlots(),event.getCarriedItem());
-            new BukkitRunnable() {
-                @Override
-                public void run() {
-                    Bukkit.getPluginManager().callEvent(bukkitEvent);
-                    openedMenu.interact(bukkitEvent);
+                    var bukkitEvent = new CustomInventoryClickEvent(openedMenu,player,event.getClickType(),event.getSlotNum(),
+                            event.getChangedSlots(),event.getCarriedItem());
+                    if (openedMenu.interact(bukkitEvent)) {
+                        event.setCancelled(true);
+                    }
+                    new BukkitRunnable() {
+                        @Override
+                        public void run() {
+                            Bukkit.getPluginManager().callEvent(bukkitEvent);
+                        }
+                    }.runTask(plugin);
+                });
+                packetListener.register(WrappedClientboundContainerSetContentPacket.class, event -> {
+                    var player = event.getPlayer();
+                    var openedMenu = getOpenedMenu(player);
+                    if (openedMenu == null) {
+                        return;
+                    }
                     event.setCancelled(true);
-                }
-            }.runTask(plugin);
-        });
-        packetListener.register(WrappedClientboundContainerSetContentPacket.class, event -> {
-            var player = event.getPlayer();
-            var openedMenu = getOpenedMenu(player);
-            if (openedMenu == null) {
-                return;
+                });
             }
-        });
+        }.runTask(plugin);
     }
 }

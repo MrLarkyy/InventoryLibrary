@@ -12,11 +12,11 @@ public class InventoryFlags {
     }
 
     public InventoryFlags(InventoryFlag... flags) {
-        this(List.of(flags));
+        this(new ArrayList<>(List.of(flags)));
     }
 
     public InventoryFlags() {
-        this(List.of(InventoryFlag.CLEAR_HISTORY_ON_CLOSE));
+        this(new ArrayList<>(List.of(InventoryFlag.CLEAR_HISTORY_ON_CLOSE, InventoryFlag.CANCEL_PLAYERS_ITEM_INTERACTION)));
     }
 
     public void addFlag(InventoryFlag flag) {

@@ -1,10 +1,15 @@
 package xyz.larkyy.inventorylibrary.api.packet;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import xyz.larkyy.inventorylibrary.api.InventoryHandler;
 import xyz.larkyy.inventorylibrary.api.packet.wrapped.WrappedPacket;
 
 import java.util.HashMap;
@@ -51,6 +56,18 @@ public class PacketListener implements Listener {
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent e) {
         playerPacketInjector.eject(e.getPlayer());
+    }
+
+    @EventHandler
+    public void onInvClose(InventoryCloseEvent e) {
+        Player player = (Player) e.getPlayer();
+        var invHandler = InventoryHandler.getInstance();
+        var opened = invHandler.getOpenedMenu(player);
+        if (opened == null) {
+            return;
+        }
+        invHandler.getRenderHandler().setWindowContent(player,0,
+                invHandler.getRenderHandler().getPlayerInventoryContent(player));
     }
 
     public void unloadInjections() {

@@ -55,9 +55,11 @@ public class RenderedButton implements RenderedComponent {
     }
 
     @Override
-    public void interact(CustomInventoryClickEvent event) {
+    public boolean interact(CustomInventoryClickEvent event) {
         if (slotSelection.slots().contains(event.getSlot())) {
             clickConsumer.accept(event);
+            return true;
         }
+        return false;
     }
 }

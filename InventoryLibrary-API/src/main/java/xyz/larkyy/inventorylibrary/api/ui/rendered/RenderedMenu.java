@@ -9,12 +9,14 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 import xyz.larkyy.inventorylibrary.api.InventoryHandler;
+import xyz.larkyy.inventorylibrary.api.ui.SlotSelection;
 import xyz.larkyy.inventorylibrary.api.ui.event.CustomInventoryClickEvent;
 import xyz.larkyy.inventorylibrary.api.ui.flag.InventoryFlag;
 import xyz.larkyy.inventorylibrary.api.ui.flag.InventoryFlags;
 import xyz.larkyy.inventorylibrary.api.ui.history.HistoryHandler;
 import xyz.larkyy.inventorylibrary.api.ui.history.IReopenable;
 import xyz.larkyy.inventorylibrary.api.ui.rendered.component.RenderedComponent;
+import xyz.larkyy.inventorylibrary.api.ui.rendered.component.RenderedPlayerItem;
 
 import javax.annotation.Nonnull;
 import java.util.*;
@@ -123,13 +125,31 @@ public class RenderedMenu implements InventoryHolder, IReopenable, Cloneable {
 
     private void handleOpen(@Nonnull Player player) {
         runAsyncTask(() -> {
-            if (cachedPlayers.containsKey(player.getUniqueId())) {
-                int id = cachedPlayers.get(player.getUniqueId()).getInventoryId();
-                InventoryHandler.getInstance().getRenderHandler().openMenu(player,RenderedMenu.this,id);
-            } else {
-                int id = InventoryHandler.getInstance().getRenderHandler().openNewMenu(player,RenderedMenu.this);
-                cachedPlayers.put(player.getUniqueId(),new InventoryPlayer(player.getUniqueId(),id));
+            int id = InventoryHandler.getInstance().getRenderHandler().openNewMenu(player,RenderedMenu.this);
+            var playerItems = InventoryHandler.getInstance().getRenderHandler().getPlayerInventoryContent(player);
+            List<RenderedComponent> playerComponents = new ArrayList<>();
+            if (!flags.contains(InventoryFlag.CLEAR_PLAYERS_INVENTORY)) {
+                int slot = -9;
+                for (var item : playerItems) {
+                    if (slot < 0) {
+                        slot++;
+                        continue;
+                    }
+                    if (item.getType() == Material.AIR) {
+                        slot++;
+                        continue;
+                    }
+                    var component = new RenderedPlayerItem(item, (e) -> {
+                        if (getFlags().contains(InventoryFlag.CANCEL_PLAYERS_ITEM_INTERACTION)) {
+                            e.setCancelled(true);
+                        }
+                    },
+                            new SlotSelection(Arrays.asList(slot+getInventory().getContents().length)));
+                    playerComponents.add(component);
+                    slot++;
+                }
             }
+            cachedPlayers.put(player.getUniqueId(),new InventoryPlayer(player.getUniqueId(),id,playerComponents));
             runSyncTask(() -> handleUpdateContent(player));
         });
     }
@@ -139,12 +159,30 @@ public class RenderedMenu implements InventoryHolder, IReopenable, Cloneable {
             return;
         }
 
-        List<ItemStack> itemStacks = new ArrayList<>();
-        for (int i = 0; i <= getTotalSlots(); i++) {
-            itemStacks.add(new ItemStack(Material.AIR));
+        var inventoryPlayer = cachedPlayers.get(player.getUniqueId());
+
+        // Top inventory slots
+        int topSlotAmount = getInventory().getContents().length;
+        // Bottom inventory slots + offhand
+        int bottomSlotAmount = 37;
+
+        final List<ItemStack> topItems = new ArrayList<>();
+
+        for (int i = 0; i < topSlotAmount; i++) {
+            topItems.add(new ItemStack(Material.AIR));
         }
 
-        for (var component : components) {
+        List<ItemStack> bottomItems = new ArrayList<>();
+
+        for (int i = 0; i < bottomSlotAmount + 9; i++) {
+            bottomItems.add(new ItemStack(Material.AIR));
+        }
+
+        List<RenderedComponent> allComponents = new ArrayList<>(inventoryPlayer.getComponents());
+        allComponents.addAll(components);
+
+
+        for (var component : allComponents) {
             for (Integer slot : component.getSlotSelection().slots()) {
                 if (slot > getTotalSlots()) {
                     continue;
@@ -153,23 +191,26 @@ public class RenderedMenu implements InventoryHolder, IReopenable, Cloneable {
                 if (itemStack == null) {
                     continue;
                 }
-                if (slot == getTotalSlots()) {
-                    handleSetItem(
-                            player,
-                            itemStack,
-                            slot
-                            );
+
+                if (slot < topSlotAmount) {
+                    topItems.set(slot,itemStack);
                 } else {
-                    itemStacks.set(slot, itemStack);
+                    bottomItems.set(slot - topSlotAmount + 9, itemStack);
                 }
             }
         }
 
-        var inventoryPlayer = cachedPlayers.get(player.getUniqueId());
+        // Setting the top inventory content
         InventoryHandler.getInstance().getRenderHandler().setWindowContent(
                 player,
                 inventoryPlayer.getInventoryId(),
-                itemStacks
+                topItems
+        );
+        // Setting the bottom inventory content (containerId 0 = Player's inventory)
+        InventoryHandler.getInstance().getRenderHandler().setWindowContent(
+                player,
+                0,
+                bottomItems
         );
     }
 
@@ -181,7 +222,13 @@ public class RenderedMenu implements InventoryHolder, IReopenable, Cloneable {
 
     public void refreshSlot(Player player, int slot) {
         ItemStack itemStack = null;
-        for (var component : components) {
+
+        var invPlayer = cachedPlayers.get(player.getUniqueId());
+
+        List<RenderedComponent> allComponents = new ArrayList<>(invPlayer.getComponents());
+        allComponents.addAll(components);
+
+        for (var component : allComponents) {
             if (!component.getSlotSelection().slots().contains(slot)) {
                 continue;
             }
@@ -191,8 +238,9 @@ public class RenderedMenu implements InventoryHolder, IReopenable, Cloneable {
             itemStack = component.getItemStack();
         }
         if (itemStack == null) {
-            return;
+            itemStack = new ItemStack(Material.AIR);
         }
+
         handleSetItem(player,itemStack,slot);
     }
 
@@ -206,7 +254,6 @@ public class RenderedMenu implements InventoryHolder, IReopenable, Cloneable {
         int totalSlotAmount = topSlotAmount + 36;
 
         if (slot == totalSlotAmount) {
-            Bukkit.broadcastMessage("Setting offhend");
             InventoryHandler.getInstance().getRenderHandler().setSlot(
                     player,
                     0,
@@ -238,24 +285,30 @@ public class RenderedMenu implements InventoryHolder, IReopenable, Cloneable {
         InventoryHandler.getInstance().getRenderHandler().setSlot(player,-1,-1,itemStack);
     }
 
-    public void interact(CustomInventoryClickEvent event) {
+    public boolean interact(CustomInventoryClickEvent event) {
         if (!cachedPlayers.containsKey(event.getPlayer().getUniqueId())) {
-            return;
+            return true;
         }
-        for (var component : components) {
-            component.interact(event);
-        }
+
         var invPlayer = cachedPlayers.get(event.getPlayer().getUniqueId());
+        List<RenderedComponent> allComponents = new ArrayList<>(invPlayer.getComponents());
+        allComponents.addAll(components);
+
+        for (var component : allComponents) {
+            if (component.interact(event)) {
+                event.getClickComponents().add(component);
+            }
+        }
 
         if (event.isCancelled()) {
             for (int i : event.getChangedSlots().keySet()) {
-                Bukkit.broadcastMessage("Updating slot");
                 refreshSlot(event.getPlayer(), i);
             }
             setCursorItem(event.getPlayer(),invPlayer.getCarriedItem());
         } else {
             invPlayer.setCarriedItem(event.getCarriedItem());
         }
+        return true;
     }
 
     private void runAsyncTask(Runnable runnable) {

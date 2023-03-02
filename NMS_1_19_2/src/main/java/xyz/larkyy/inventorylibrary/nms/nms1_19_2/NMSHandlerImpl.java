@@ -3,7 +3,10 @@ package xyz.larkyy.inventorylibrary.nms.nms1_19_2;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import xyz.larkyy.inventorylibrary.api.NMSHandler;
+
+import java.util.List;
 
 public class NMSHandlerImpl implements NMSHandler {
 

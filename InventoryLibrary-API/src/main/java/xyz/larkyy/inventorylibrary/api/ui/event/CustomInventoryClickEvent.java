@@ -8,6 +8,10 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.inventory.ItemStack;
 import xyz.larkyy.inventorylibrary.api.packet.ClickType;
 import xyz.larkyy.inventorylibrary.api.ui.rendered.RenderedMenu;
+import xyz.larkyy.inventorylibrary.api.ui.rendered.component.RenderedComponent;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class CustomInventoryClickEvent extends Event implements Cancellable {
     private static final HandlerList HANDLERS = new HandlerList();
@@ -19,6 +23,7 @@ public class CustomInventoryClickEvent extends Event implements Cancellable {
     private final int slot;
     private final Int2ObjectMap<ItemStack> changedSlots;
     private final ItemStack carriedItem;
+    private final List<RenderedComponent> clickComponents;
 
     public CustomInventoryClickEvent(RenderedMenu renderedMenu, Player player, ClickType clickType, int slot,
                                      Int2ObjectMap<ItemStack> changedSlots, ItemStack carriedItem) {
@@ -28,6 +33,7 @@ public class CustomInventoryClickEvent extends Event implements Cancellable {
         this.slot = slot;
         this.changedSlots = changedSlots;
         this.carriedItem = carriedItem;
+        this.clickComponents = new ArrayList<>();
     }
 
     public static HandlerList getHandlerList() {
@@ -71,5 +77,9 @@ public class CustomInventoryClickEvent extends Event implements Cancellable {
 
     public ItemStack getCarriedItem() {
         return carriedItem;
+    }
+
+    public List<RenderedComponent> getClickComponents() {
+        return clickComponents;
     }
 }

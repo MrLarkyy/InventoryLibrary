@@ -23,6 +23,7 @@ import org.bukkit.inventory.ItemStack;
 import xyz.larkyy.inventorylibrary.api.IRenderHandler;
 import xyz.larkyy.inventorylibrary.api.ui.rendered.RenderedMenu;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class RenderHandler implements IRenderHandler {
@@ -84,6 +85,7 @@ public class RenderHandler implements IRenderHandler {
 
         nmsHandler.sendPacket(player.getBukkitEntity(), packet);
         player.containerMenu = craftContainer;
+        //player.initMenu(craftContainer);
 
         if (player.containerMenu == previousContainer) {
             return craftContainer.containerId;
@@ -107,18 +109,6 @@ public class RenderHandler implements IRenderHandler {
         itemStacks.forEach(is -> list.add(CraftItemStack.asNMSCopy(is)));
         var entityPlayer = entityPlayer(player);
 
-        int i = 0;
-        for (var item : itemStacks) {
-            if (item == null) {
-                i++;
-                continue;
-            }
-            if (item.getType() != Material.AIR) {
-                Bukkit.broadcastMessage("Setting "+item.getType().name()+" to "+i);
-            }
-            i++;
-        }
-
         var packet = new ClientboundContainerSetContentPacket(
                 containerId,
                 entityPlayer.containerMenu.getStateId(),
@@ -140,7 +130,19 @@ public class RenderHandler implements IRenderHandler {
         nmsHandler.sendPacket(player,packet);
     }
 
+    @Override
+    public List<ItemStack> getPlayerInventoryContent(Player player) {
+        var entityPlayer = entityPlayer(player);
+        var invItems = entityPlayer.inventoryMenu.getItems();
+
+        List<ItemStack> items = new ArrayList<>();
+        for (var item : invItems) {
+            items.add(CraftItemStack.asBukkitCopy(item));
+        }
+        return items;
+    }
     private ServerPlayer entityPlayer(Player player) {
         return ((CraftPlayer)player).getHandle();
     }
+
 }

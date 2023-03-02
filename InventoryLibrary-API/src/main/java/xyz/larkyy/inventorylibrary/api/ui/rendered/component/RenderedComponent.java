@@ -7,7 +7,7 @@ import xyz.larkyy.inventorylibrary.api.ui.event.CustomInventoryClickEvent;
 import java.util.Map;
 
 public interface RenderedComponent {
-    void interact(CustomInventoryClickEvent event);
+    boolean interact(CustomInventoryClickEvent event);
     SlotSelection getSlotSelection();
     ItemStack getItemStack();
 }

@@ -77,7 +77,11 @@
             <groupId>xyz.larkyy.inventorylibrary</groupId>
             <artifactId>InventoryLibrary-API</artifactId>
             <version>0.0.1</version>
-            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>xyz.larkyy.inventorylibrary</groupId>
+            <artifactId>NMS_1_19_2</artifactId>
+            <version>0.0.1</version>
         </dependency>
     </dependencies>
 </project>

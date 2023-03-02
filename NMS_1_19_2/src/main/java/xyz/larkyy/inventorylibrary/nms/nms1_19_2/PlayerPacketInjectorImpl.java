@@ -96,12 +96,6 @@ public class PlayerPacketInjectorImpl implements PlayerPacketInjector {
 
                 WrappedPacket wrapped = null;
 
-                //Bukkit.broadcastMessage("Packet: "+name);
-
-                if (name.toLowerCase().contains("item") || name.toLowerCase().contains("advancement") || name.toLowerCase().contains("achievement")) {
-                    Bukkit.broadcastMessage("Packet: "+name);
-                }
-
                 switch (name.toLowerCase()) {
                     case "packetplayinwindowclick" -> {
                         if (!packetListener().isListeningTo(WrappedServerboundContainerClickPacket.class)) {
@@ -110,7 +104,6 @@ public class PlayerPacketInjectorImpl implements PlayerPacketInjector {
                         ServerboundContainerClickPacket packet = (ServerboundContainerClickPacket) pkt;
                         var changedSlots =
                                 Utils.map(packet.getChangedSlots(), CraftItemStack::asBukkitCopy);
-
                         wrapped = new WrappedServerboundContainerClickPacket(
                                 player,
                                 packet.getButtonNum(),
@@ -121,13 +114,14 @@ public class PlayerPacketInjectorImpl implements PlayerPacketInjector {
                                 packet.getSlotNum(),
                                 packet.getStateId()
                         );
-                        InventoryHandler.getInstance().getPacketListener().call(wrapped);
-
                     }
                 }
 
-                if (wrapped != null && wrapped.isCancelled()) {
-                    return;
+                if (wrapped != null) {
+                    InventoryHandler.getInstance().getPacketListener().call(wrapped);
+                    if (wrapped.isCancelled()) {
+                        return;
+                    }
                 }
 
                 try {
@@ -148,15 +142,6 @@ public class PlayerPacketInjectorImpl implements PlayerPacketInjector {
                 }
                 var name = pkt.getClass().getSimpleName();
 
-                /*
-                if (!name.equalsIgnoreCase("ClientboundSystemChatPacket")) {
-                }
-                 */
-
-                if (name.toLowerCase().contains("item") || name.toLowerCase().contains("advancement") || name.toLowerCase().contains("achievement")) {
-                    Bukkit.broadcastMessage("Packet: "+name);
-                }
-
                 WrappedPacket wrapped = null;
 
                 switch (name.toLowerCase()) {
@@ -168,7 +153,6 @@ public class PlayerPacketInjectorImpl implements PlayerPacketInjector {
                         wrapped = new WrappedClientboundOpenScreenPacket(player, packet.getContainerId(), packet.getTitle().getString());
                     }
                     case "packetplayoutwindowitems" -> {
-                        Bukkit.broadcastMessage("Called!");
                         if (!packetListener().isListeningTo(WrappedClientboundContainerSetContentPacket.class)) {
                             break;
                         }
