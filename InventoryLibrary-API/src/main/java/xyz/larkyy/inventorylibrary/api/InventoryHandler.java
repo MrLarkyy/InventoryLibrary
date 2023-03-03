@@ -3,12 +3,12 @@ package xyz.larkyy.inventorylibrary.api;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import xyz.larkyy.inventorylibrary.api.packet.PacketListener;
 import xyz.larkyy.inventorylibrary.api.packet.PlayerPacketInjector;
 import xyz.larkyy.inventorylibrary.api.packet.wrapped.WrappedClientboundContainerSetContentPacket;
-import xyz.larkyy.inventorylibrary.api.packet.wrapped.WrappedClientboundOpenScreenPacket;
 import xyz.larkyy.inventorylibrary.api.packet.wrapped.WrappedServerboundContainerClickPacket;
 import xyz.larkyy.inventorylibrary.api.ui.event.CustomInventoryClickEvent;
 import xyz.larkyy.inventorylibrary.api.ui.event.CustomInventoryOpenEvent;
@@ -77,7 +77,7 @@ public class InventoryHandler {
     }
 
     public RenderedMenu getOpenedMenu(Player player) {
-        var holder = getRenderHandler().getOpenedMenu(player).getHolder();
+        InventoryHolder holder = player.getOpenInventory().getTopInventory().getHolder();
         if (holder instanceof RenderedMenu renderedMenu) {
             return renderedMenu;
         }
@@ -97,37 +97,36 @@ public class InventoryHandler {
     }
 
     private void registerListeners() {
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                packetListener.register(WrappedServerboundContainerClickPacket.class, event -> {
-                    var player = event.getPlayer();
-                    var openedMenu = getOpenedMenu(player);
-                    if (openedMenu == null) {
-                        return;
-                    }
-
-                    var bukkitEvent = new CustomInventoryClickEvent(openedMenu,player,event.getClickType(),event.getSlotNum(),
-                            event.getChangedSlots(),event.getCarriedItem());
-                    if (openedMenu.interact(bukkitEvent)) {
-                        event.setCancelled(true);
-                    }
-                    new BukkitRunnable() {
-                        @Override
-                        public void run() {
-                            Bukkit.getPluginManager().callEvent(bukkitEvent);
-                        }
-                    }.runTask(plugin);
-                });
-                packetListener.register(WrappedClientboundContainerSetContentPacket.class, event -> {
-                    var player = event.getPlayer();
-                    var openedMenu = getOpenedMenu(player);
-                    if (openedMenu == null) {
-                        return;
-                    }
-                    event.setCancelled(true);
-                });
+        packetListener.register(WrappedServerboundContainerClickPacket.class, event -> {
+            var player = event.getPlayer();
+            var openedMenu = getOpenedMenu(player);
+            if (openedMenu == null) {
+                return;
             }
-        }.runTask(plugin);
+
+            var bukkitEvent = new CustomInventoryClickEvent(openedMenu,player,event.getClickType(),event.getSlotNum(),
+                    event.getChangedSlots(),event.getCarriedItem());
+            if (openedMenu.interact(bukkitEvent)) {
+                event.setCancelled(true);
+            }
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    Bukkit.getPluginManager().callEvent(bukkitEvent);
+                }
+            }.runTask(plugin);
+        });
+        /*
+        packetListener.register(WrappedClientboundContainerSetContentPacket.class, event -> {
+            var player = event.getPlayer();
+
+            var openedMenu = getOpenedMenu(player);
+            if (openedMenu == null) {
+                return;
+            }
+            Bukkit.broadcastMessage("Opened menu is not null!");
+            event.setCancelled(true);
+        });
+         */
     }
 }
