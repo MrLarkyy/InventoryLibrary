@@ -29,6 +29,10 @@ public class MenuHistory {
         }
     }
 
+    public boolean hasPreviousMenu() {
+        return !history.empty();
+    }
+
     public void clear() {
         history.clear();
     }
