@@ -14,14 +14,13 @@ import xyz.larkyy.inventorylibrary.api.ui.event.CustomInventoryClickEvent;
 import xyz.larkyy.inventorylibrary.api.ui.flag.InventoryFlag;
 import xyz.larkyy.inventorylibrary.api.ui.flag.InventoryFlags;
 import xyz.larkyy.inventorylibrary.api.ui.history.HistoryHandler;
-import xyz.larkyy.inventorylibrary.api.ui.history.IReopenable;
 import xyz.larkyy.inventorylibrary.api.ui.rendered.component.RenderedComponent;
 import xyz.larkyy.inventorylibrary.api.ui.rendered.component.RenderedPlayerItem;
 
 import javax.annotation.Nonnull;
 import java.util.*;
 
-public class RenderedMenu implements InventoryHolder, IReopenable, Cloneable {
+public class RenderedMenu implements InventoryHolder, Cloneable {
 
     private final Inventory inventory;
     private final int size;
@@ -198,6 +197,9 @@ public class RenderedMenu implements InventoryHolder, IReopenable, Cloneable {
 
 
         for (var component : allComponents) {
+            if (!component.isVisible(player)) {
+                continue;
+            }
             for (Integer slot : component.getSlotSelection().slots()) {
                 if (slot > getTotalSlots()) {
                     continue;
@@ -326,6 +328,20 @@ public class RenderedMenu implements InventoryHolder, IReopenable, Cloneable {
         return true;
     }
 
+    public void close(Player player) {
+        player.closeInventory();
+        handleClose(player);
+    }
+
+    public void handleClose(Player player) {
+        var invHandler = InventoryHandler.getInstance();
+        invHandler.getRenderHandler().setWindowContent(player,0,
+                invHandler.getRenderHandler().getPlayerInventoryContent(player));
+        if (flags.contains(InventoryFlag.CLEAR_HISTORY_ON_CLOSE)) {
+            historyHandler().removeHistory(player);
+        }
+    }
+
     private void runAsyncTask(Runnable runnable) {
         new BukkitRunnable() {
             @Override
@@ -351,11 +367,6 @@ public class RenderedMenu implements InventoryHolder, IReopenable, Cloneable {
 
     public String getTitle() {
         return title;
-    }
-
-    @Override
-    public RenderedMenu getHistoryMenu() {
-        return this;
     }
 
     private HistoryHandler historyHandler() {

@@ -24,7 +24,8 @@ public class MenuHistory {
             var menu = history.pop();
             menu.open(player);
         } catch (EmptyStackException ignored) {
-            // CLOSE
+            var menu = history.peek();
+            menu.close(player);
         }
     }
 

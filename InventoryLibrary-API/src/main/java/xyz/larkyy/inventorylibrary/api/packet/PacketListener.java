@@ -66,8 +66,7 @@ public class PacketListener implements Listener {
         if (opened == null) {
             return;
         }
-        invHandler.getRenderHandler().setWindowContent(player,0,
-                invHandler.getRenderHandler().getPlayerInventoryContent(player));
+        opened.handleClose(player);
     }
 
     public void unloadInjections() {
