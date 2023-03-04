@@ -130,6 +130,7 @@ public class RenderedMenu implements InventoryHolder, IReopenable, Cloneable {
                 InventoryHandler.getInstance().getRenderHandler().openMenu(player,RenderedMenu.this,id);
             } else {
                 int id = InventoryHandler.getInstance().getRenderHandler().openNewMenu(player,RenderedMenu.this);
+                InventoryHandler.getInstance().addCachedInventoryId(player.getUniqueId(),id);
                 var playerItems = InventoryHandler.getInstance().getRenderHandler().getPlayerInventoryContent(player);
                 List<RenderedComponent> playerComponents = new ArrayList<>();
                 if (!flags.contains(InventoryFlag.CLEAR_PLAYERS_INVENTORY)) {
