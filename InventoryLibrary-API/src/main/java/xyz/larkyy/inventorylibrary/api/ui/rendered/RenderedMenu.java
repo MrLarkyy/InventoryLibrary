@@ -96,9 +96,6 @@ public class RenderedMenu implements InventoryHolder, Cloneable {
 
     public void open(Player player) {
         var history = historyHandler().getOrCreate(player);
-        if (!flags.contains(InventoryFlag.IGNORE_HISTORY)) {
-            history.add(this);
-        }
         if (flags.contains(InventoryFlag.CLEAR_HISTORY_ON_OPEN)) {
             history.clear();
         }
@@ -337,7 +334,6 @@ public class RenderedMenu implements InventoryHolder, Cloneable {
 
     public void close(Player player) {
         player.closeInventory();
-        handleClose(player);
     }
 
     public void handleClose(Player player) {
@@ -346,6 +342,10 @@ public class RenderedMenu implements InventoryHolder, Cloneable {
                 invHandler.getRenderHandler().getPlayerInventoryContent(player));
         if (flags.contains(InventoryFlag.CLEAR_HISTORY_ON_CLOSE)) {
             historyHandler().removeHistory(player);
+        }
+        else if (!flags.contains(InventoryFlag.IGNORE_HISTORY)) {
+            var history = historyHandler().getOrCreate(player);
+            history.add(this);
         }
     }
 
