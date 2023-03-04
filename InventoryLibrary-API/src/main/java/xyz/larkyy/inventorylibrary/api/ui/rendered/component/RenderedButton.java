@@ -1,5 +1,6 @@
 package xyz.larkyy.inventorylibrary.api.ui.rendered.component;
 
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import xyz.larkyy.inventorylibrary.api.itemstack.CustomItem;
 import xyz.larkyy.inventorylibrary.api.ui.SlotSelection;
@@ -7,6 +8,7 @@ import xyz.larkyy.inventorylibrary.api.ui.event.CustomInventoryClickEvent;
 import xyz.larkyy.inventorylibrary.api.ui.template.component.Button;
 
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class RenderedButton implements RenderedComponent {
 
@@ -14,6 +16,7 @@ public class RenderedButton implements RenderedComponent {
 
     private ItemStack itemStack;
     private Consumer<CustomInventoryClickEvent> clickConsumer;
+    private Function<Player,Boolean> viewCondition = (p) -> true;
     private SlotSelection slotSelection;
 
     public RenderedButton(Button button) {
@@ -38,6 +41,14 @@ public class RenderedButton implements RenderedComponent {
         this.itemStack = button.getItemStack().clone();
         this.clickConsumer = button.getClickConsumer();
         this.slotSelection = button.getSlotSelection().clone();
+    }
+
+    public Function<Player, Boolean> getViewCondition() {
+        return viewCondition;
+    }
+
+    public void setViewCondition(Function<Player, Boolean> viewCondition) {
+        this.viewCondition = viewCondition;
     }
 
     public void resetDefaults() {
@@ -70,10 +81,17 @@ public class RenderedButton implements RenderedComponent {
     }
 
     @Override
+    public boolean isVisible(Player player) {
+        return viewCondition.apply(player);
+    }
+
+    @Override
     public boolean interact(CustomInventoryClickEvent event) {
         if (slotSelection.slots().contains(event.getSlot())) {
-            clickConsumer.accept(event);
-            return true;
+            if (viewCondition.apply(event.getPlayer())) {
+                clickConsumer.accept(event);
+                return true;
+            }
         }
         return false;
     }
