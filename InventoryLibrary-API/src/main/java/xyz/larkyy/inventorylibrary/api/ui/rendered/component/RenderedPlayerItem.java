@@ -1,5 +1,6 @@
 package xyz.larkyy.inventorylibrary.api.ui.rendered.component;
 
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import xyz.larkyy.inventorylibrary.api.ui.SlotSelection;
 import xyz.larkyy.inventorylibrary.api.ui.event.CustomInventoryClickEvent;
@@ -35,5 +36,10 @@ public class RenderedPlayerItem implements RenderedComponent{
     @Override
     public ItemStack getItemStack() {
         return itemStack;
+    }
+
+    @Override
+    public boolean isVisible(Player player) {
+        return true;
     }
 }
