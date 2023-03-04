@@ -2,20 +2,20 @@ package xyz.larkyy.inventorylibrary.api;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import xyz.larkyy.inventorylibrary.api.packet.PacketListener;
-import xyz.larkyy.inventorylibrary.api.packet.PlayerPacketInjector;
-import xyz.larkyy.inventorylibrary.api.packet.wrapped.WrappedClientboundContainerSetContentPacket;
 import xyz.larkyy.inventorylibrary.api.packet.wrapped.WrappedServerboundContainerClickPacket;
 import xyz.larkyy.inventorylibrary.api.ui.event.CustomInventoryClickEvent;
-import xyz.larkyy.inventorylibrary.api.ui.event.CustomInventoryOpenEvent;
 import xyz.larkyy.inventorylibrary.api.ui.history.HistoryHandler;
 import xyz.larkyy.inventorylibrary.api.ui.rendered.RenderedMenu;
 
+import java.util.*;
+
 public class InventoryHandler {
+
+    private final Map<UUID, List<Integer>> cachedInventoryIds = new HashMap<>();
 
     private static InventoryHandler instance;
 
@@ -76,6 +76,34 @@ public class InventoryHandler {
         }
     }
 
+    public void addCachedInventoryId(UUID uuid, int id) {
+        List<Integer> list;
+        if (cachedInventoryIds.containsKey(uuid)) {
+            list = cachedInventoryIds.get(uuid);
+        } else {
+            list = new ArrayList<>();
+            cachedInventoryIds.put(uuid,list);
+        }
+        if (!list.contains(id)) {
+            list.add(id);
+        }
+    }
+
+    public void removeCachedInventoryId(UUID uuid, int id) {
+        if (cachedInventoryIds.containsKey(uuid)) {
+            List<Integer> list = cachedInventoryIds.get(uuid);
+            list.remove(id);
+        }
+    }
+
+    public boolean isCustomInventoryId(UUID uuid, int id) {
+        if (cachedInventoryIds.containsKey(uuid)) {
+            List<Integer> list = cachedInventoryIds.get(uuid);
+            return list.contains(id);
+        }
+        return false;
+    }
+
     public RenderedMenu getOpenedMenu(Player player) {
         InventoryHolder holder = player.getOpenInventory().getTopInventory().getHolder();
         if (holder instanceof RenderedMenu renderedMenu) {
@@ -99,6 +127,10 @@ public class InventoryHandler {
     private void registerListeners() {
         packetListener.register(WrappedServerboundContainerClickPacket.class, event -> {
             var player = event.getPlayer();
+
+            if (!isCustomInventoryId(player.getUniqueId(),event.getContainerId())) {
+                return;
+            }
             var openedMenu = getOpenedMenu(player);
             if (openedMenu == null) {
                 return;
