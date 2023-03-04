@@ -11,9 +11,9 @@ public class PacketListenerRegistry<T extends WrappedPacket> {
 
 
     public void call(T packet) {
-        consumers.forEach(c -> {
+        for (Consumer<T> c : consumers) {
             c.accept(packet);
-        });
+        }
     }
 
     public void register(Consumer<T> consumer) {

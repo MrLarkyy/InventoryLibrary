@@ -72,6 +72,7 @@ public class RenderHandler implements IRenderHandler {
         }
         var entityPlayer = entityPlayer(player);
         var craftContainer = new CraftContainer(craftInv,entityPlayer,entityPlayer.nextContainerCounter());
+
         return handleOpen(entityPlayer,craftContainer,type,CraftChatMessage.fromJSONOrString(renderedMenu.getTitle()));
     }
 

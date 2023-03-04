@@ -20,10 +20,6 @@ import xyz.larkyy.inventorylibrary.api.Utils;
 import xyz.larkyy.inventorylibrary.api.packet.ClickType;
 import xyz.larkyy.inventorylibrary.api.packet.PacketListener;
 import xyz.larkyy.inventorylibrary.api.packet.PlayerPacketInjector;
-import xyz.larkyy.inventorylibrary.api.packet.wrapped.WrappedClientboundContainerSetContentPacket;
-import xyz.larkyy.inventorylibrary.api.packet.wrapped.WrappedClientboundOpenScreenPacket;
-import xyz.larkyy.inventorylibrary.api.packet.wrapped.WrappedPacket;
-import xyz.larkyy.inventorylibrary.api.packet.wrapped.WrappedServerboundContainerClickPacket;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -81,102 +77,7 @@ public class PlayerPacketInjectorImpl implements PlayerPacketInjector {
 
         pipelines.put(player.getUniqueId(), pipeline);
 
-        ChannelDuplexHandler cdh = new ChannelDuplexHandler() {
-            @Override
-            public void channelRead(ChannelHandlerContext ctx, Object packetObj) {
-
-                if (!(packetObj instanceof Packet<?> pkt)) {
-                    try {
-                        super.channelRead(ctx, packetObj);
-                    } catch (Exception ignored) {
-                    }
-                    return;
-                }
-                var name = pkt.getClass().getSimpleName();
-
-                WrappedPacket wrapped = null;
-
-                switch (name.toLowerCase()) {
-                    case "packetplayinwindowclick" -> {
-                        if (!packetListener().isListeningTo(WrappedServerboundContainerClickPacket.class)) {
-                            break;
-                        }
-                        ServerboundContainerClickPacket packet = (ServerboundContainerClickPacket) pkt;
-                        var changedSlots =
-                                Utils.map(packet.getChangedSlots(), CraftItemStack::asBukkitCopy);
-                        wrapped = new WrappedServerboundContainerClickPacket(
-                                player,
-                                packet.getButtonNum(),
-                                packet.getContainerId(),
-                                CraftItemStack.asBukkitCopy(packet.getCarriedItem()),
-                                changedSlots,
-                                ClickType.get(packet.getClickType().name(), packet.getButtonNum()),
-                                packet.getSlotNum(),
-                                packet.getStateId()
-                        );
-                    }
-                }
-
-                if (wrapped != null) {
-                    InventoryHandler.getInstance().getPacketListener().call(wrapped);
-                    if (wrapped.isCancelled()) {
-                        return;
-                    }
-                }
-
-                try {
-                    super.channelRead(ctx, packetObj);
-                } catch (Exception ignored) {
-                }
-            }
-
-            @Override
-            public void write(ChannelHandlerContext ctx, Object packetObj, ChannelPromise promise) {
-                if (!(packetObj instanceof Packet<?> pkt)) {
-                    try {
-                        super.write(ctx, packetObj, promise);
-                    } catch (Exception ignored) {
-
-                    }
-                    return;
-                }
-                var name = pkt.getClass().getSimpleName();
-
-                WrappedPacket wrapped = null;
-
-                switch (name.toLowerCase()) {
-                    case "packetplayoutopenwindow" -> {
-                        if (!packetListener().isListeningTo(WrappedClientboundOpenScreenPacket.class)) {
-                            break;
-                        }
-                        ClientboundOpenScreenPacket packet = (ClientboundOpenScreenPacket) pkt;
-                        wrapped = new WrappedClientboundOpenScreenPacket(player, packet.getContainerId(), packet.getTitle().getString());
-                    }
-                    case "packetplayoutwindowitems" -> {
-                        if (!packetListener().isListeningTo(WrappedClientboundContainerSetContentPacket.class)) {
-                            break;
-                        }
-                        ClientboundContainerSetContentPacket packet = (ClientboundContainerSetContentPacket) pkt;
-                        wrapped = new WrappedClientboundContainerSetContentPacket(player, CraftItemStack.asBukkitCopy(packet.getCarriedItem()),
-                                packet.getContainerId(),packet.getStateId(),packet.getItems()
-                                .stream().map(CraftItemStack::asBukkitCopy).collect(Collectors.toList()));
-
-                    }
-                }
-                if (wrapped != null) {
-                    InventoryHandler.getInstance().getPacketListener().call(wrapped);
-                    if (wrapped.isCancelled()) {
-                        return;
-                    }
-                }
-
-                try {
-                    super.write(ctx, packetObj, promise);
-                } catch (Exception ignored) {
-
-                }
-            }
-        };
+        PacketChannelDuplexHandler cdh = new PacketChannelDuplexHandler(player);
 
         for (String str : pipeline.toMap().keySet()) {
             if (pipeline.get(str) instanceof Connection) {
