@@ -20,6 +20,10 @@ public class InventoryPlayer {
         this.components = components;
     }
 
+    public void setComponents(List<RenderedComponent> components) {
+        this.components = components;
+    }
+
     public ItemStack getCarriedItem() {
         return carriedItem;
     }
