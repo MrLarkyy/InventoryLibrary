@@ -246,6 +246,9 @@ public class RenderedMenu implements InventoryHolder, Cloneable {
         allComponents.addAll(components);
 
         for (var component : allComponents) {
+            if (!component.isVisible(player)) {
+                continue;
+            }
             if (!component.getSlotSelection().slots().contains(slot)) {
                 continue;
             }
