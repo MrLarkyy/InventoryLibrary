@@ -168,6 +168,10 @@ public class RenderedMenu implements InventoryHolder, Cloneable {
         return playerComponents;
     }
 
+    public void updateInventoryContent(Player player) {
+        handleUpdateContent(player);
+    }
+
     private void handleUpdateContent(@Nonnull Player player) {
         if (!cachedPlayers.containsKey(player.getUniqueId())) {
             return;
