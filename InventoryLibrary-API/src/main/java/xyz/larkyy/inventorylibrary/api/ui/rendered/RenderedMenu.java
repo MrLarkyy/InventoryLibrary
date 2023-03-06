@@ -95,6 +95,9 @@ public class RenderedMenu implements InventoryHolder, Cloneable {
     }
 
     public void open(Player player) {
+        var previousMenu = InventoryHandler.getInstance().getOpenedMenu(player);
+        previousMenu.handleClose(player);
+
         var history = historyHandler().getOrCreate(player);
         if (flags.contains(InventoryFlag.CLEAR_HISTORY_ON_OPEN)) {
             history.clear();
