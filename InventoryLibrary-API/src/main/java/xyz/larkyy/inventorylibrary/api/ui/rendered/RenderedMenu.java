@@ -118,7 +118,7 @@ public class RenderedMenu implements InventoryHolder {
         var history = historyHandler().getOrCreate(player);
         if (flags.contains(InventoryFlag.CLEAR_HISTORY_ON_OPEN)) {
             history.clear();
-        } else {
+        } else if (history != null) {
             history.add(previousMenu);
         }
         handleOpen(player);
