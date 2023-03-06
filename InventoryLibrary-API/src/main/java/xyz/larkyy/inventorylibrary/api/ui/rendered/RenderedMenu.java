@@ -90,6 +90,25 @@ public class RenderedMenu implements InventoryHolder {
         }
     }
 
+    public List<RenderedComponent> getComponents(int slot) {
+        List<RenderedComponent> list = new ArrayList<>();
+        for (var component : components) {
+            if (component.getSlotSelection().slots().contains(slot)) {
+                list.add(component);
+            }
+        }
+        return list;
+    }
+
+    public void clearComponentsSlot(int slot) {
+        for (var component : components) {
+            var selection = component.getSlotSelection();
+            if (selection.slots().contains(slot)) {
+                selection.slots().remove(slot);
+            }
+        }
+    }
+
     public InventoryFlags getFlags() {
         return flags;
     }
