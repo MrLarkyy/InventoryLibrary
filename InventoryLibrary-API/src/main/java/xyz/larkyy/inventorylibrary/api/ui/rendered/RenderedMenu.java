@@ -20,7 +20,7 @@ import xyz.larkyy.inventorylibrary.api.ui.rendered.component.RenderedPlayerItem;
 import javax.annotation.Nonnull;
 import java.util.*;
 
-public class RenderedMenu implements InventoryHolder, Cloneable {
+public class RenderedMenu implements InventoryHolder {
 
     private final Inventory inventory;
     private final int size;
@@ -294,7 +294,6 @@ public class RenderedMenu implements InventoryHolder, Cloneable {
         }
 
     }
-
     /*
         Updates the item on cursor. This method is mainly used for the
         CustomInventoryClickEvent. So when the event is cancelled,
