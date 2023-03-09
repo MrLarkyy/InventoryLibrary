@@ -66,6 +66,10 @@ public class RenderedButton implements RenderedComponent {
         this.clickConsumer = clickConsumer;
     }
 
+    public Consumer<CustomInventoryClickEvent> getClickConsumer() {
+        return clickConsumer;
+    }
+
     public void setItemStack(ItemStack itemStack) {
         this.itemStack = itemStack;
     }
