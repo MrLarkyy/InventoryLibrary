@@ -22,7 +22,7 @@ public class MenuHistory {
     public void openPrevious() {
         try {
             var menu = history.pop();
-            menu.open(player);
+            menu.open(player, true);
         } catch (EmptyStackException ignored) {
             var menu = history.peek();
             menu.close(player);
