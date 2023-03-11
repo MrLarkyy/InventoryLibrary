@@ -370,12 +370,7 @@ public class RenderedMenu implements InventoryHolder {
         if (flags.contains(InventoryFlag.CLEAR_HISTORY_ON_CLOSE)) {
             historyHandler().removeHistory(player);
         }
-        else if (!flags.contains(InventoryFlag.IGNORE_HISTORY)) {
-            var history = historyHandler().getOrCreate(player);
-            history.add(this);
-        }
     }
-
     private void runAsyncTask(Runnable runnable) {
         new BukkitRunnable() {
             @Override
