@@ -61,20 +61,10 @@ public class PaginationManager {
         if (page >= pages.size()) {
             return;
         }
-        var prevPage = pages.get(page);
-        var prevPageFlags = prevPage.getFlags();
-        boolean hadFlag = false;
-        if (prevPageFlags.contains(InventoryFlag.CLEAR_HISTORY_ON_CLOSE)) {
-            prevPageFlags.removeFlag(InventoryFlag.CLEAR_HISTORY_ON_CLOSE);
-            hadFlag = true;
-        }
         this.page = page;
         var pageMenu = pages.get(page);
         handlePageButtons(pageMenu);
-        pageMenu.open(player);
-        if (hadFlag) {
-            prevPageFlags.addFlag(InventoryFlag.CLEAR_HISTORY_ON_CLOSE);
-        }
+        pageMenu.open(player,true);
     }
 
     public RenderedButton getNextPageComponent() {
