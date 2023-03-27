@@ -81,4 +81,32 @@ public enum ClickType {
             return null;
         }
     }
+
+    /**
+     * Gets whether this ClickType represents a right click.
+     *
+     * @return true if this ClickType represents a right click
+     */
+    public boolean isRightClick() {
+        return (this == ClickType.RIGHT_CLICK) || (this == ClickType.SHIFT_RIGHT_CLICK);
+    }
+
+    /**
+     * Gets whether this ClickType represents a left click.
+     *
+     * @return true if this ClickType represents a left click
+     */
+    public boolean isLeftClick() {
+        return (this == ClickType.LEFT_CLICK) || (this == ClickType.SHIFT_LEFT_CLICK);
+    }
+
+    /**
+     * Gets whether this ClickType indicates that the shift key was pressed
+     * down when the click was made.
+     *
+     * @return true if the action uses Shift.
+     */
+    public boolean isShiftClick() {
+        return (this == ClickType.SHIFT_RIGHT_CLICK) || (this == ClickType.SHIFT_LEFT_CLICK);
+    }
 }
