@@ -148,7 +148,7 @@ public class RenderedMenu implements InventoryHolder {
     }
 
     private void handleOpen(@Nonnull Player player) {
-        runAsyncTask(() -> {
+        runSyncTask(() -> {
             InventoryPlayer inventoryPlayer;
             if (cachedPlayers.containsKey(player.getUniqueId())) {
                 inventoryPlayer = cachedPlayers.get(player.getUniqueId());
@@ -368,8 +368,13 @@ public class RenderedMenu implements InventoryHolder {
 
     public void handleClose(Player player) {
         var invHandler = InventoryHandler.getInstance();
-        invHandler.getRenderHandler().setWindowContent(player,0,
-                invHandler.getRenderHandler().getPlayerInventoryContent(player));
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                invHandler.getRenderHandler().setWindowContent(player,0,
+                        invHandler.getRenderHandler().getPlayerInventoryContent(player));
+            }
+        }.runTaskLater(InventoryHandler.getInstance().getPlugin(), 1);
         if (flags.contains(InventoryFlag.CLEAR_HISTORY_ON_CLOSE)) {
             historyHandler().removeHistory(player);
         }
