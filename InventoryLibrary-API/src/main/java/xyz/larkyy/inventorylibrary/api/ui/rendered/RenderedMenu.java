@@ -368,13 +368,8 @@ public class RenderedMenu implements InventoryHolder {
 
     public void handleClose(Player player) {
         var invHandler = InventoryHandler.getInstance();
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                invHandler.getRenderHandler().setWindowContent(player,0,
-                        invHandler.getRenderHandler().getPlayerInventoryContent(player));
-            }
-        }.runTaskLater(InventoryHandler.getInstance().getPlugin(), 1);
+        invHandler.getRenderHandler().setWindowContent(player,0,
+                invHandler.getRenderHandler().getPlayerInventoryContent(player));
         if (flags.contains(InventoryFlag.CLEAR_HISTORY_ON_CLOSE)) {
             historyHandler().removeHistory(player);
         }
