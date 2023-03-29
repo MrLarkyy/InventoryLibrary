@@ -1,15 +1,18 @@
 package xyz.larkyy.inventorylibrary.api.ui;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class SlotSelection implements Cloneable {
 
-    private List<Integer> slots = new ArrayList<>();
+    private Set<Integer> slots = new HashSet<>();
 
     public SlotSelection(List<Integer> slots) {
-        this.slots = slots;
+        this.slots.addAll(slots);
+    }
+    public SlotSelection(int... slots) {
+        for (int slot : slots) {
+            this.slots.add(slot);
+        }
     }
     public SlotSelection(int from, int to) {
         var min = Math.min(from,to);
@@ -21,7 +24,7 @@ public class SlotSelection implements Cloneable {
     }
 
     public SlotSelection(int slot) {
-        this.slots = new ArrayList<>(Arrays.asList(slot));
+        this.slots = new HashSet<>(Arrays.asList(slot));
     }
 
     @Override
@@ -29,7 +32,7 @@ public class SlotSelection implements Cloneable {
         return new SlotSelection(new ArrayList<>(slots));
     }
 
-    public List<Integer> slots() {
+    public Set<Integer> slots() {
         return slots;
     }
 
