@@ -8,7 +8,6 @@ import net.minecraft.network.protocol.game.ClientboundOpenScreenPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.craftbukkit.v1_19_R1.entity.CraftPlayer;
 import org.bukkit.craftbukkit.v1_19_R1.inventory.CraftContainer;
@@ -36,8 +35,6 @@ public class RenderHandler implements IRenderHandler {
 
     @Override
     public Inventory createInventory(InventoryHolder holder, InventoryType inventoryType, int size) {
-
-
         new CraftInventoryCustom(holder,inventoryType);
 
         CraftInventoryCustom inventory;

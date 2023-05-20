@@ -148,21 +148,24 @@ public class RenderedMenu implements InventoryHolder {
     }
 
     private void handleOpen(@Nonnull Player player) {
-        runAsyncTask(() -> {
+        runSyncTask(() -> {
             InventoryPlayer inventoryPlayer;
             if (cachedPlayers.containsKey(player.getUniqueId())) {
                 inventoryPlayer = cachedPlayers.get(player.getUniqueId());
                 int id = inventoryPlayer.getInventoryId();
+                var playerComponents = loadPlayerComponents(player);
+                inventoryPlayer.setComponents(playerComponents);
+                runSyncTask(() -> handleUpdateContent(player));
                 InventoryHandler.getInstance().getRenderHandler().openMenu(player,RenderedMenu.this,id);
             } else {
                 int id = InventoryHandler.getInstance().getRenderHandler().openNewMenu(player,RenderedMenu.this);
                 InventoryHandler.getInstance().addCachedInventoryId(player.getUniqueId(),id);
                 inventoryPlayer = new InventoryPlayer(player.getUniqueId(),id,new ArrayList<>());
                 cachedPlayers.put(player.getUniqueId(),inventoryPlayer);
+                var playerComponents = loadPlayerComponents(player);
+                inventoryPlayer.setComponents(playerComponents);
+                runSyncTask(() -> handleUpdateContent(player));
             }
-            var playerComponents = loadPlayerComponents(player);
-            inventoryPlayer.setComponents(playerComponents);
-            runSyncTask(() -> handleUpdateContent(player));
         });
     }
 

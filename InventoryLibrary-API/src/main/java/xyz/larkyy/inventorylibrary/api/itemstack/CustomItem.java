@@ -2,6 +2,7 @@ package xyz.larkyy.inventorylibrary.api.itemstack;
 
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import xyz.larkyy.inventorylibrary.api.InventoryHandler;
 import xyz.larkyy.inventorylibrary.api.itemstack.nbt.NBTCompound;
 import xyz.larkyy.inventorylibrary.api.itemstack.nbt.NBTTag;
